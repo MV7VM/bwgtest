@@ -11,7 +11,7 @@ type Db struct {
 }
 
 type Prices struct {
-	Prices []byte `json:"Prices"`
+	Prices string `json:"Prices"`
 	Date   string `json:"Date"`
 }
 
@@ -26,9 +26,9 @@ type TicketDifference struct {
 }
 
 type TickerInfo struct {
-	Ticker   string
-	DateFrom string
-	DateTo   string
+	Ticker   string `json:"ticker"`
+	DateFrom string `json:"date_from"`
+	DateTo   string `json:"date_to"`
 }
 
 type TickerInfoResponse struct {

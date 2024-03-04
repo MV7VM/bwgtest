@@ -5,6 +5,7 @@ import (
 	"bwg/internal/common"
 	"bwg/internal/models"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/jackc/pgx/v5"
@@ -44,16 +45,22 @@ func UpdateDb(newPrices models.TickerInfoResponse, pool *pgxpool.Pool, date stri
 		slog.Info("UpdateDb CollectOneRow to tickerInfo", tickerInfo)
 		fmt.Println(tickerInfo.Prices, string(tickerInfo.Prices))
 		//var OldPrice []models.Prices
+
+		var prices []models.Prices
+		err = json.Unmarshal(tickerInfo.Prices, &prices)
+		if err != nil {
+			slog.Error("fail to inmarshal:", err)
+		}
 		//err = json.Unmarshal(tickerInfo.Prices, &OldPrice)
 		//if err != nil {
 		//	slog.Error("fail to unmarshal tickerInfo to oldPrice", err)
 		//}
-		slog.Info("UpdateDb Marshal to OldPrice", tickerInfo.Prices)
+		slog.Info("UpdateDb Marshal to OldPrice", prices)
 		//tickerInfo.Prices = OldPrice
 		//err := row.Scan(&tickerInfo)
 		//slog.Info("UpdeteDb Row->tickerInfo:", tickerInfo)
 
-		NewPricesJson := common.UpdateJson(tickerInfo, []byte(v.Price), date)
+		NewPricesJson := common.UpdateJson(prices, []byte(v.Price), date)
 		slog.Info("tickerInfo to commit:", tickerInfo.Ticker, NewPricesJson)
 		_, err = pool.Exec(context.Background(), "UPDATE tickers SET prices=($1) WHERE ticker=($2);", NewPricesJson, v.Ticker)
 		if err != nil {

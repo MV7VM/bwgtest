@@ -7,6 +7,7 @@ import (
 	"bwg/internal/models"
 	"context"
 	"encoding/json"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"io/ioutil"
 	"log/slog"
@@ -36,6 +37,21 @@ func (r *Repository) NewTicker(ticker string) error {
 	return nil
 }
 
+func (r *Repository) GetPriceDifference(info models.TickerInfo) (models.TicketDifference, error) {
+	var TicketDifference models.TicketDifference
+	rows, _ := r.pool.Query(context.Background(), "SELECT * FROM tickers WHERE ticker=($1);", info.Ticker)
+	slog.Info("GetPriceDifference Row:", rows)
+	tickerInfo, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[models.DB])
+	if err != nil {
+		slog.Error("fail to CollectOneRow tickerInfo")
+		return TicketDifference, err
+	}
+	var prices []models.Prices
+	err = json.Unmarshal(tickerInfo.Prices, &prices)
+	slog.Info("GetPriceDifference prices:", prices)
+	return common.PriceDifference(info.Ticker, info.DateFrom, info.DateTo, prices), nil
+}
+
 func (r *Repository) CurrentPrice() error {
 	rows, err := r.pool.Query(context.Background(), "SELECT ticker FROM tickers")
 	if err != nil {
@@ -55,7 +71,7 @@ func (r *Repository) CurrentPrice() error {
 		slog.Info("CuttentPrice all tickers", tickers)
 	}
 	newPrices, err = r.GetPrice(tickers)
-	err = database.UpdateDb(newPrices, r.pool, time.DateTime)
+	err = database.UpdateDb(newPrices, r.pool, time.Now().Format("2006-01-02 15:04:05"))
 	if err != nil {
 		slog.Error("Error in UpdateDb: ", err)
 		return err

@@ -39,7 +39,7 @@ func main() {
 	app.service = service.New(app.repository)
 	app.handlers = handlers.New(app.service)
 	app.routers.Post("/add_ticker", app.handlers.Post)
-	app.routers.Post("/fetch", app.handlers.Get)
+	app.routers.Get("/fetch", app.handlers.Get)
 	err := app.routers.Listen(":3000")
 	if err != nil {
 		logger.Error("Cann't listen ", port, "\n", err)
